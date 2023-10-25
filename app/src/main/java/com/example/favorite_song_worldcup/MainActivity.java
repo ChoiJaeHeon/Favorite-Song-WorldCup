@@ -3,7 +3,6 @@ package com.example.favorite_song_worldcup;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.os.Handler;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -13,5 +12,3 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 }
- // 가나다
-// 테스트
