@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.example.favorite_song_worldcup'
-    compileSdk 32
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.favorite_song_worldcup"
         minSdk 21
-        targetSdk 32
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
