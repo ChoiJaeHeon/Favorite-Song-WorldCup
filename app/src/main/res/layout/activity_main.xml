@@ -87,5 +87,11 @@
         app:layout_constraintStart_toStartOf="@+id/imageButtondown"
         app:layout_constraintTop_toTopOf="@+id/imageButtondown" />
 
+    <!-- Konfetti 객체 생성 -->
+    <nl.dionsegijn.konfetti.xml.KonfettiView
+        android:id="@+id/konfettiView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

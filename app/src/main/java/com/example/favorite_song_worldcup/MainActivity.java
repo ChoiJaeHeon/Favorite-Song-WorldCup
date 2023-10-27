@@ -1,6 +1,5 @@
 package com.example.favorite_song_worldcup;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
@@ -8,13 +7,30 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.TimeUnit;
+
 // 음악을 재생하기 위해 MediaPlayer 클래스를 import
 import android.media.MediaPlayer;
 
-import androidx.appcompat.app.AppCompatActivity;
+// 애니메이션용 모듈
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
-import java.util.LinkedList;
-import java.util.Queue;
+// 이펙트 추가용 모듈
+import static nl.dionsegijn.konfetti.core.Position.Relative;
+import androidx.appcompat.app.AppCompatActivity;
+import nl.dionsegijn.konfetti.core.Angle;
+import nl.dionsegijn.konfetti.core.Party;
+import nl.dionsegijn.konfetti.core.PartyFactory;
+import nl.dionsegijn.konfetti.core.Spread;
+import nl.dionsegijn.konfetti.core.emitter.Emitter;
+import nl.dionsegijn.konfetti.core.emitter.EmitterConfig;
+import nl.dionsegijn.konfetti.core.models.Shape;
+import nl.dionsegijn.konfetti.core.models.Size;
+import nl.dionsegijn.konfetti.xml.KonfettiView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -103,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 애니메이션 XML 불러오기
+        Animation nextAnimation = AnimationUtils.loadAnimation(this, R.anim.next_animation);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -140,96 +158,155 @@ public class MainActivity extends AppCompatActivity {
         imgtop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // 선택한 번호 큐에 저장.
-                queue.offer(window[0]);
-                pics_value+=2;
-                // 진행도 업데이트 - 선택 한번당 pics_value : 2, pics_value당 6.25
-                updateProgressBar((int) ((pics_value+2) * 6.25));
+                // 선택 시 애니메이션
+                imgtop.startAnimation(nextAnimation);
+                playButtonTop.startAnimation(nextAnimation);
+                // 이미지 딜레이 걸어서 동시에 일어나는 것 방지
+                imgtop.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 선택한 번호 큐에 저장.
+                        queue.offer(window[0]);
+                        pics_value += 2;
+                        // 진행도 업데이트 - 선택 한번당 pics_value : 2, pics_value당 6.25
+                        updateProgressBar((int) ((pics_value + 2) * 6.25));
 
-                // 이 부분을 통해 다음 라운드로 넘어갔는지 판단하고, 라운드 넘어갔을때 이전 라운드 노래 종료되게 구현함.
-                if (currentRound != pics_value / 2) {
-                    currentRound = pics_value / 2;
-                    stopMusicTop();
-                    stopMusicBottom();
-                }
+                        // 이 부분을 통해 다음 라운드로 넘어갔는지 판단하고, 라운드 넘어갔을때 이전 라운드 노래 종료되게 구현함.
+                        if (currentRound != pics_value / 2) {
+                            currentRound = pics_value / 2;
+                            stopMusicTop();
+                            stopMusicBottom();
+                        }
 
-                if(pics_value < 8) { // 처음 8강의 경우! 랜덤 대진표 작성
-                    int[] n = getRandomNum();
-                    setImages(n[0], n[1], getApplicationContext());
-                }
+                        if (pics_value < 8) { // 처음 8강의 경우! 랜덤 대진표 작성
+                            int[] n = getRandomNum();
+                            setImages(n[0], n[1], getApplicationContext());
+                        }
+                        else if (pics_value == 8) { // 8강 마지막 선택.1:2 2:4 3:6 [4:8]
+                            setImages(queue.poll(), queue.poll(), getApplicationContext());
+                            stage.setText("4강");
+                        }
+                        else if (pics_value < 12) { // 4강, 결승은 여기로 빼서 랜덤 사용 x, 큐 사용
+                            setImages(queue.poll(), queue.poll(), getApplicationContext());
+                        }
+                        else if (pics_value == 12) { // 4강 마지막 선택
+                            stage.setText("결승");
+                            setImages(queue.poll(), queue.poll(), getApplicationContext());
+                        }
+                        else if (pics_value == 14) { // 결승
+                            // 이때 큐에 남는 건 딱 하나 = 결승 우승.
+                            stage.setText("우승");
+                            int win = queue.poll();
+                            setImages(win, win, getApplicationContext());
 
-                else if(pics_value == 8){ // 8강 마지막 선택.1:2 2:4 3:6 [4:8]
-                    setImages(queue.poll(), queue.poll(), getApplicationContext());
-                    stage.setText("4강");
-                }
-                else if (pics_value < 12){ // 4강, 결승은 여기로 빼서 랜덤 사용 x, 큐 사용
-                    setImages(queue.poll(), queue.poll(), getApplicationContext());
-                }
-                else if(pics_value == 12){ // 4강 마지막 선택
-                    stage.setText("결승");
-                    setImages(queue.poll(), queue.poll(), getApplicationContext());
-                }
-                else if (pics_value == 14){ // 결승
-                    // 이때 큐에 남는 건 딱 하나 = 결승 우승.
-                    stage.setText("우승");
-                    int win = queue.poll();
-                    setImages(win, win, getApplicationContext());
+                            // 나머지 가리기.
+                            // 플래이 버튼 가리기 추가
+                            imgbot.setVisibility(View.GONE);
+                            textview.setVisibility(View.GONE);
+                            playButtonTop.setVisibility(View.GONE);
+                            playButtonBottom.setVisibility(View.GONE);
 
-                    // 나머지 가리기.
-                    // 플래이 버튼 가리기 추가
-                    imgbot.setVisibility(View.GONE);
-                    textview.setVisibility(View.GONE);
-                    playButtonTop.setVisibility(View.GONE);
-                    playButtonBottom.setVisibility(View.GONE);
-                }
+                            // 우승 이펙트 추가
+                            KonfettiView konfettiView =findViewById(R.id.konfettiView);
+                            EmitterConfig emitterConfig = new Emitter(5, TimeUnit.SECONDS).perSecond(30);
+                            konfettiView.start(
+                                    new PartyFactory(emitterConfig)
+                                            .angle(Angle.RIGHT - 45)
+                                            .spread(Spread.SMALL)
+                                            .shapes(Arrays.asList(Shape.Square.INSTANCE, Shape.Circle.INSTANCE))
+                                            .colors(Arrays.asList(0xfce18a, 0xff726d, 0xf4306d, 0xb48def))
+                                            .setSpeedBetween(10f, 30f)
+                                            .position(new Relative(0.0, 0.3))
+                                            .build(),
+                                    new PartyFactory(emitterConfig)
+                                            .angle(Angle.LEFT + 45)
+                                            .spread(Spread.SMALL)
+                                            .shapes(Arrays.asList(Shape.Square.INSTANCE, Shape.Circle.INSTANCE))
+                                            .colors(Arrays.asList(0xfce18a, 0xff726d, 0xf4306d, 0xb48def))
+                                            .setSpeedBetween(10f, 30f)
+                                            .position(new Relative(1.0, 0.3))
+                                            .build()
+                            );
+                        }
+                    }
+                }, nextAnimation.getDuration());
             }
         });
 
         imgbot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                queue.offer(window[1]);
-                pics_value+=2;
+                imgbot.startAnimation(nextAnimation);
+                playButtonBottom.startAnimation(nextAnimation);
 
-                // 진행도 업데이트 - 선택 한번당 pics_value : 2, pics_value당 6.25
-                updateProgressBar((int) ((pics_value+2) * 6.25));
+                imgbot.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        queue.offer(window[1]);
+                        pics_value += 2;
 
-                // 현재 라운드를 카운트 해줌, 만약 라운드가 변했다면 이전 라운드에서 재생중인 노래 싹다 정지
-                if (currentRound != pics_value / 2) {
-                    currentRound = pics_value / 2;
-                    stopMusicTop();
-                    stopMusicBottom();
-                }
+                        // 진행도 업데이트 - 선택 한번당 pics_value : 2, pics_value당 6.25
+                        updateProgressBar((int) ((pics_value + 2) * 6.25));
 
-                if(pics_value < 8) { // 처음 8강의 경우! 랜덤 대진표 작성
-                    int[] n = getRandomNum();
-                    setImages(n[0], n[1], getApplicationContext());
-                }
+                        // 현재 라운드를 카운트 해줌, 만약 라운드가 변했다면 이전 라운드에서 재생중인 노래 싹다 정지
+                        if (currentRound != pics_value / 2) {
+                            currentRound = pics_value / 2;
+                            stopMusicTop();
+                            stopMusicBottom();
+                        }
 
-                else if(pics_value == 8){ // 8강 마지막 선택.1:2 2:4 3:6 [4:8]
-                    setImages(queue.poll(), queue.poll(), getApplicationContext());
-                    stage.setText("4강");
-                }
-                else if (pics_value < 12){ // 4강, 결승은 여기로 빼서 랜덤 사용 x, 큐 사용
-                    setImages(queue.poll(), queue.poll(), getApplicationContext());
-                }
-                else if(pics_value == 12){ // 4강 마지막 선택
-                    stage.setText("결승");
-                    setImages(queue.poll(), queue.poll(), getApplicationContext());
-                }
-                else if (pics_value == 14) { // 결승
-                    // 이때 큐에 남는 건 딱 하나 = 결승 우승.
-                    stage.setText("우승");
-                    int win = queue.poll();
-                    setImages(win, win, getApplicationContext());
+                        if (pics_value < 8) { // 처음 8강의 경우! 랜덤 대진표 작성
+                            int[] n = getRandomNum();
+                            setImages(n[0], n[1], getApplicationContext());
+                        }
+                        else if (pics_value == 8) { // 8강 마지막 선택.1:2 2:4 3:6 [4:8]
+                            setImages(queue.poll(), queue.poll(), getApplicationContext());
+                            stage.setText("4강");
+                        }
+                        else if (pics_value < 12) { // 4강, 결승은 여기로 빼서 랜덤 사용 x, 큐 사용
+                            setImages(queue.poll(), queue.poll(), getApplicationContext());
+                        }
+                        else if (pics_value == 12) { // 4강 마지막 선택
+                            stage.setText("결승");
+                            setImages(queue.poll(), queue.poll(), getApplicationContext());
+                        }
+                        else if (pics_value == 14) { // 결승
+                            // 이때 큐에 남는 건 딱 하나 = 결승 우승.
+                            stage.setText("우승");
+                            int win = queue.poll();
+                            setImages(win, win, getApplicationContext());
 
-                    // 나머지 가리기.
-                    // 재생 버튼 가리기 추가
-                    imgbot.setVisibility(View.GONE);
-                    textview.setVisibility(View.GONE);
-                    playButtonTop.setVisibility(View.GONE);
-                    playButtonBottom.setVisibility(View.GONE);
-                }
+                            // 나머지 가리기.
+                            // 재생 버튼 가리기 추가
+                            imgbot.setVisibility(View.GONE);
+                            textview.setVisibility(View.GONE);
+                            playButtonTop.setVisibility(View.GONE);
+                            playButtonBottom.setVisibility(View.GONE);
+
+                            // 우승 이펙트 추가
+                            KonfettiView konfettiView =findViewById(R.id.konfettiView);
+                            EmitterConfig emitterConfig = new Emitter(5, TimeUnit.SECONDS).perSecond(30);
+                            konfettiView.start(
+                                    new PartyFactory(emitterConfig)
+                                            .angle(Angle.RIGHT - 45)
+                                            .spread(Spread.SMALL)
+                                            .shapes(Arrays.asList(Shape.Square.INSTANCE, Shape.Circle.INSTANCE))
+                                            .colors(Arrays.asList(0xfce18a, 0xff726d, 0xf4306d, 0xb48def))
+                                            .setSpeedBetween(10f, 30f)
+                                            .position(new Relative(0.0, 0.3))
+                                            .build(),
+                                    new PartyFactory(emitterConfig)
+                                            .angle(Angle.LEFT + 45)
+                                            .spread(Spread.SMALL)
+                                            .shapes(Arrays.asList(Shape.Square.INSTANCE, Shape.Circle.INSTANCE))
+                                            .colors(Arrays.asList(0xfce18a, 0xff726d, 0xf4306d, 0xb48def))
+                                            .setSpeedBetween(10f, 30f)
+                                            .position(new Relative(1.0, 0.3))
+                                            .build()
+                            );
+                        }
+                    }
+                }, nextAnimation.getDuration());
             }
         });
     }
