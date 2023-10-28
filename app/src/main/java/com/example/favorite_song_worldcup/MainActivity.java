@@ -3,6 +3,7 @@ package com.example.favorite_song_worldcup;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -42,8 +43,11 @@ public class MainActivity extends AppCompatActivity {
     // 위쪽 플래이 버튼, 아래쪽 플래이 버튼을 따로 생각해 준다
     private static MediaPlayer mediaPlayerTop;
     private static MediaPlayer mediaPlayerBottom;
+    private static ImageButton playButtonTop;
+    private static ImageButton playButtonBottom;
     // 다음 라운드로 넘어갔을때 여전히 이전 라운드의 노래가 재생되는 이슈 방지. 라운드를 직접 카운트 할 예정
     private static int currentRound = 0;
+    private static Button restartButton;
     // 8강 생성시 랜덤생성 위한, 배열
 
     // 8강,4강,결승에서 선택한 값들을 순서대로 저장하기 위한 큐.
@@ -129,8 +133,9 @@ public class MainActivity extends AppCompatActivity {
         stage = (TextView) findViewById(R.id.Stage);
         textview = (TextView) findViewById(R.id.textView2);
         progressBar = findViewById(R.id.progressBar1);
-        ImageButton playButtonTop = findViewById(R.id.playButtonTop);
-        ImageButton playButtonBottom = findViewById(R.id.playButtonBottom);
+        playButtonTop = findViewById(R.id.playButtonTop);
+        playButtonBottom = findViewById(R.id.playButtonBottom);
+        restartButton = findViewById(R.id.restartButton);
 
         //위쪽 버튼을 클릭했을때 실행 할 명령, 아래쪽 음악 멈추기, 음악이름 전달해서 해당 노래가 재생되게 함
         playButtonTop.setOnClickListener(new View.OnClickListener() {
@@ -181,17 +186,21 @@ public class MainActivity extends AppCompatActivity {
                         if (pics_value < 8) { // 처음 8강의 경우! 랜덤 대진표 작성
                             int[] n = getRandomNum();
                             setImages(n[0], n[1], getApplicationContext());
+                            restartButton.setVisibility(View.GONE);
                         }
                         else if (pics_value == 8) { // 8강 마지막 선택.1:2 2:4 3:6 [4:8]
                             setImages(queue.poll(), queue.poll(), getApplicationContext());
                             stage.setText("4강");
+                            restartButton.setVisibility(View.GONE);
                         }
                         else if (pics_value < 12) { // 4강, 결승은 여기로 빼서 랜덤 사용 x, 큐 사용
                             setImages(queue.poll(), queue.poll(), getApplicationContext());
+                            restartButton.setVisibility(View.GONE);
                         }
                         else if (pics_value == 12) { // 4강 마지막 선택
                             stage.setText("결승");
                             setImages(queue.poll(), queue.poll(), getApplicationContext());
+                            restartButton.setVisibility(View.GONE);
                         }
                         else if (pics_value == 14) { // 결승
                             // 이때 큐에 남는 건 딱 하나 = 결승 우승.
@@ -205,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
                             textview.setVisibility(View.GONE);
                             playButtonTop.setVisibility(View.GONE);
                             playButtonBottom.setVisibility(View.GONE);
+                            restartButton.setVisibility(View.VISIBLE);
 
                             // 우승 이펙트 추가
                             KonfettiView konfettiView =findViewById(R.id.konfettiView);
@@ -309,8 +319,34 @@ public class MainActivity extends AppCompatActivity {
                 }, nextAnimation.getDuration());
             }
         });
+
+        restartButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                restartGame(getApplicationContext());
+            }
+        });
     }
 
+    private void restartGame(Context context) {
+        // Reset all necessary variables and views to their initial states
+        currentRound = 0;
+        pics_value = 0;
+        queue.clear();
+        init(context);
+        imgbot.setVisibility(View.VISIBLE);
+        textview.setVisibility(View.VISIBLE);
+        playButtonTop.setVisibility(View.VISIBLE);
+        playButtonBottom.setVisibility(View.VISIBLE);
+        progressBar.setProgress(0);
+        stage.setText("8강");
+
+        if (pics_value == 14) {
+            restartButton.setVisibility(View.VISIBLE);
+        } else {
+            restartButton.setVisibility(View.GONE);
+        }
+    }
     public static void init(Context context){ // 초기값 지정.
         // stage - textview 8강으로 초기화
         stage.setText("8강");
