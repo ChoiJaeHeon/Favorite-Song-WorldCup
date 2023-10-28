@@ -320,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // 다시하기 버튼 실행
         restartButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -328,8 +329,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // 다시하기 메서드
     private void restartGame(Context context) {
-        // Reset all necessary variables and views to their initial states
+        // 모든 변수 초기화
         currentRound = 0;
         pics_value = 0;
         queue.clear();
