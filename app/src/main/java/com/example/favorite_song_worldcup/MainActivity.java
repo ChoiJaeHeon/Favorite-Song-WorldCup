@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
     // 다음 라운드로 넘어갔을때 이전라운드에서 재생 되고 있는 음악을 확실하게 꺼주기 위해서 stop 함수 구현.
     // 다른 버튼 눌렀을때 이전에 나오고 있던 음악 멈추기 위한 용도로 사용
-    // 이 부분 없으면 노래가 한번 재생하면 멈추지 않는 좋버그 수시로 발생.
+    // 이 부분 없으면 노래가 한번 재생하면 멈추지 않는 이슈 발생.
     // 메모리 누수 방지 release() 메서드 호출, 없으면 앱 종료됨
     private void stopMusicTop() {
         if (mediaPlayerTop != null) {
