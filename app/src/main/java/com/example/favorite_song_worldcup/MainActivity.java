@@ -1,5 +1,6 @@
 package com.example.favorite_song_worldcup;
 
+import android.content.Intent;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
@@ -24,13 +25,11 @@ import android.view.animation.AnimationUtils;
 import static nl.dionsegijn.konfetti.core.Position.Relative;
 import androidx.appcompat.app.AppCompatActivity;
 import nl.dionsegijn.konfetti.core.Angle;
-import nl.dionsegijn.konfetti.core.Party;
 import nl.dionsegijn.konfetti.core.PartyFactory;
 import nl.dionsegijn.konfetti.core.Spread;
 import nl.dionsegijn.konfetti.core.emitter.Emitter;
 import nl.dionsegijn.konfetti.core.emitter.EmitterConfig;
 import nl.dionsegijn.konfetti.core.models.Shape;
-import nl.dionsegijn.konfetti.core.models.Size;
 import nl.dionsegijn.konfetti.xml.KonfettiView;
 
 public class MainActivity extends AppCompatActivity {
@@ -325,7 +324,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 restartGame(getApplicationContext());
+                Intent intent=new Intent(MainActivity.this, StartActivity.class);
+                startActivity(intent);
             }
+
         });
     }
 
